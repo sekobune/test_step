@@ -40,11 +40,6 @@ extension Reactive where Base == Realm {
                         single(.success(()))
                     }
                 }
-
-//                try self.base.write {
-//                    self.base.delete(data)
-//                    single(.success(()))
-//                }
             } catch let e {
                 single(.error(e))
             }
@@ -59,6 +54,26 @@ extension Reactive where Base == Realm {
                     let data = self.base.objects(DogDBO.self).first
                     single(.success(data))
                 }
+            } catch let e {
+                single(.error(e))
+            }
+            return Disposables.create()
+        }
+    }
+    
+    public func addDataIfEmpty(_ data: Object) -> Single<Bool> {
+        return Single.create { single in
+            do {
+                try
+                    self.base.write {
+                        let dataModel = self.base.objects(DogDBO.self).first
+                        guard (dataModel == nil) else {
+                            single(.success(false))
+                            return
+                        }
+                        self.base.add(data)
+                        single(.success(true))
+                    }
             } catch let e {
                 single(.error(e))
             }

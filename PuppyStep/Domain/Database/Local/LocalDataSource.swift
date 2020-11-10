@@ -14,6 +14,7 @@ protocol LocalDataSource {
     func addDogData(dog: Dog) -> Single<Void>
     func removeDogData(dog: Dog) -> Single<Void>
     func getDogData() -> Single<Dog?>
+    func addDogDataSingle(dog: Dog) -> Single<Bool>
 }
 
 class LocalRealmDataSource: LocalDataSource {
@@ -27,6 +28,11 @@ class LocalRealmDataSource: LocalDataSource {
     func addDogData(dog: Dog) -> Single<Void> {
         let dogModel = transformDogToDogModel(dogObject: dog)
         return db.rx.addData(dogModel)
+    }
+    
+    func addDogDataSingle(dog: Dog) -> Single<Bool> {
+        let dogModel = transformDogToDogModel(dogObject: dog)
+        return db.rx.addDataIfEmpty(dogModel)
     }
     
     func removeDogData(dog: Dog) -> Single<Void> {

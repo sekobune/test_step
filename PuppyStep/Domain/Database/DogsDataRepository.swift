@@ -71,33 +71,33 @@ public class DogsDataRepository: DogsRepository {
             .disposed(by: disposeBag)
     }
     
+    //NOTE: Check this method, all is ok?
     func walkDog(dog: Dog, completion: @escaping InfoCompletion) {
         
-        let prepareOperation = localDataSource.getDogData()
-        let firstOperation = localDataSource.addDogData(dog: dog).asObservable()
+        let firstOperation = localDataSource.addDogDataSingle(dog: dog).asObservable()
         let secondOperation = remoteDataSource.removeDog(removableDog: dog)
         
-        //NOTE: How to do better?
-        prepareOperation.do(
-            onSuccess: { (currentDog) in
-                if currentDog == nil {
-                    firstOperation.concat(secondOperation)
-                        .subscribe {
-                            completion(true)
-                        } onError: { error in
-                            completion(false)
-                        }
-                        .disposed(by: self.disposeBag)
-                } else {
+        firstOperation
+            .flatMap { (success) -> Observable<Void> in
+                guard success else {
                     completion(false)
+                    return .empty()
                 }
-            }, onError: { (error) in
+                return secondOperation
+            }
+            .subscribe {
+                completion(true)
+            } onError: { error in
                 completion(false)
-            })
-            .subscribe()
-            .disposed(by: disposeBag)
+            }
+            .disposed(by: self.disposeBag)
     }
     
+    //onNext first
+    //onCompleted first
+    //onSuccess second
+    
+    //NOTE: Two times completion??
     func bringWalkingDog(dog: Dog, completion: @escaping InfoCompletion) {
         let firstOperation = remoteDataSource.addDog(addedDog: dog)
         let secondOperation = localDataSource.removeDogData(dog: dog)
